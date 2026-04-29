@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Are You a Perfect Pitch?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=General+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-300: #d4d4d4;
+      --gray-400: #a3a3a3;
+      --gray-500: #737373;
+      --gray-600: #525252;
+      --gray-700: #404040;
+      --gray-800: #262626;
+      --gray-900: #1a1a1a;
+    }
+
+    body {
+      font-family: 'General Sans', -apple-system, sans-serif;
+      background: rgba(0, 0, 0, 0.95);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    /* Dark shadow overlay that follows cursor */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        350px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.2) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 0;
+      mix-blend-mode: normal;
+    }
+
+    /* Light glow on top layer */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        300px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.04) 50%,
+        transparent 80%
+      );
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Interactive elements cast shadow and get light */
+    .game-container button,
+    .game-container input,
+    .game-container .test-card,
+    .game-container .difficulty-card,
+    .game-container .option-btn,
+    .game-container .sequence-note {
+      position: relative;
+      box-shadow:
+        0 0 0 0 rgba(255, 255, 255, 0),
+        inset 0 0 0 0 rgba(255, 255, 255, 0);
+      transition: box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* Buttons get illuminated when cursor is near */
+    .game-container button:hover,
+    .game-container input:hover,
+    .game-container .test-card:hover,
+    .game-container .difficulty-card:hover,
+    .game-container .option-btn:hover,
+    .game-container .sequence-note:hover {
+      box-shadow:
+        0 0 20px 5px rgba(255, 255, 255, 0.1),
+        inset 0 0 15px 2px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Active/pressed state - stronger glow */
+    .game-container button:active,
+    .game-container .option-btn:active,
+    .game-container .test-card:active,
+    .game-container .difficulty-card:active {
+      box-shadow:
+        0 0 30px 10px rgba(255, 255, 255, 0.15),
+        inset 0 0 20px 5px rgba(255, 255, 255, 0.08);
+    }
+
+    /* Inner glow on the game container */
+    .game-container {
+      width: 100%;
+      max-width: 600px;
+      min-height: 600px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Inner glow on the game container */
+    .game-container {
+      width: 100%;
+      max-width: 600px;
+      min-height: 600px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    .screen.exit {
+      transform: translateX(-20px);
+    }
+
+    h1, h2 {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--gray-500);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Start Screen */
+    #start-screen {
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .title-section {
+      text-align: center;
+    }
+
+    .title-decoration {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .title-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--white);
+      border-radius: 50%;
+    }
+
+    .title-dot:nth-child(2) {
+      background: var(--gray-500);
+    }
+
+    .title-dot:nth-child(3) {
+      background: var(--gray-500);
+    }
+
+    .test-type-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .test-card {
+      background: transparent;
+      border: 2px solid var(--white);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .test-card:hover {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .test-card:hover .card-number {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .test-card:hover .card-icon {
+      stroke: var(--black);
+    }
+
+    .card-number {
+      width: 40px;
+      height: 40px;
+      background: var(--white);
+      color: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'General Sans', monospace;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .card-content {
+      flex: 1;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+    }
+
+    .test-card:hover .card-desc {
+      color: var(--gray-600);
+    }
+
+    .card-icon {
+      width: 24px;
+      height: 24px;
+      stroke: var(--white);
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+      transition: stroke 0.2s ease;
+    }
+
+    /* Name Entry Screen */
+    #name-screen {
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--gray-500);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--white);
+    }
+
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .selected-test-badge {
+      background: var(--gray-900);
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--gray-400);
+    }
+
+    .selected-test-badge strong {
+      color: var(--white);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .input-group input {
+      padding: 16px;
+      border: 2px solid var(--white);
+      background: transparent;
+      color: var(--white);
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: box-shadow 0.2s;
+    }
+
+    .input-group input::placeholder {
+      color: var(--gray-500);
+    }
+
+    .input-group input:focus {
+      box-shadow: 4px 4px 0 var(--gray-600);
+    }
+
+    .btn-primary {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      padding: 16px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 0 var(--gray-500);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* Difficulty Screen */
+    #difficulty-screen {
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .difficulty-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .difficulty-card {
+      border: 2px solid var(--white);
+      padding: 24px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .difficulty-card:hover {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .difficulty-card:hover .difficulty-tones {
+      color: var(--gray-600);
+    }
+
+    .difficulty-label {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .difficulty-tones {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    /* Game Screen */
+    #game-screen {
+      justify-content: space-between;
+      padding: 20px 0;
+      gap: 16px;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .game-back-btn {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--gray-500);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      font-family: 'General Sans', sans-serif;
+      transition: color 0.2s;
+      padding: 8px 12px;
+      z-index: 10;
+    }
+
+    .game-back-btn:hover {
+      color: var(--white);
+    }
+
+    .game-back-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .game-header-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .question-counter {
+      font-family: 'General Sans', monospace;
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .question-counter span {
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .game-score {
+      font-family: 'General Sans', monospace;
+      font-size: 0.85rem;
+    }
+
+    .game-score span {
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .game-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .audio-section {
+      text-align: center;
+      padding: 32px;
+      border: 2px dashed var(--gray-700);
+    }
+
+    .audio-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+    }
+
+    .audio-btn {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .audio-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .audio-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .replay-btn {
+      background: var(--gray-800);
+      color: var(--white);
+      margin-left: 8px;
+    }
+
+    .replay-btn:hover {
+      background: var(--gray-700);
+    }
+
+    .question-section h3 {
+      font-family: 'General Sans', monospace;
+      font-size: 1rem;
+      text-align: center;
+      color: var(--gray-400);
+      margin-bottom: 16px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 8px;
+    }
+
+    .option-btn {
+      background: transparent;
+      border: 2px solid var(--white);
+      color: var(--white);
+      padding: 12px 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .option-btn:hover {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .option-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .option-btn.selected {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .option-btn.correct {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: var(--white);
+    }
+
+    .option-btn.incorrect {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: var(--white);
+    }
+
+    .submit-btn {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      padding: 14px 32px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 0 var(--gray-600);
+    }
+
+    .submit-btn:disabled {
+      background: var(--gray-600);
+      color: var(--gray-400);
+      cursor: not-allowed;
+    }
+
+    /* Result Message */
+    .result-message {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+    }
+
+    .result-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .result-message.correct {
+      color: #22c55e;
+    }
+
+    .result-message.incorrect {
+      color: #ef4444;
+    }
+
+    .joke-text {
+      font-style: italic;
+      margin-top: 4px;
+      color: var(--gray-400);
+    }
+
+    .next-btn {
+      background: var(--gray-800);
+      color: var(--white);
+      border: none;
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      margin-top: 16px;
+    }
+
+    .next-btn:hover {
+      background: var(--gray-900);
+    }
+
+    /* Sequence Input Display */
+    .sequence-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 16px 0;
+      min-height: 48px;
+    }
+
+    .sequence-note {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'General Sans', monospace;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--white);
+      background: transparent;
+    }
+
+    .sequence-note.inputted {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .sequence-note.answer {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: var(--white);
+    }
+
+    .sequence-note.wrong {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: var(--white);
+    }
+
+    /* Results Screen */
+    #results-screen {
+      justify-content: flex-start;
+      gap: 24px;
+      padding-top: 20px;
+      overflow-y: auto;
+    }
+
+    .results-header {
+      text-align: center;
+    }
+
+    .score-display {
+      font-family: 'General Sans', monospace;
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 16px 0;
+    }
+
+    .score-display span {
+      font-size: 1.5rem;
+      color: var(--gray-500);
+    }
+
+    .rating-badge {
+      display: inline-block;
+      background: var(--white);
+      color: var(--black);
+      padding: 8px 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .breakdown-section {
+      flex: 1;
+    }
+
+    .breakdown-title {
+      font-family: 'General Sans', monospace;
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .questions-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stage-row {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .stage-label {
+      font-family: 'General Sans', monospace;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .stage-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-bar {
+      flex: 1;
+      height: 24px;
+      background: var(--gray-800);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage-bar-fill {
+      height: 100%;
+      background: var(--white);
+      transition: width 0.5s ease;
+    }
+
+    .stage-bar-fill.partial {
+      background: var(--gray-500);
+    }
+
+    .stage-details {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+      padding-left: 72px;
+    }
+
+    .stage-details .correct-answer {
+      color: #22c55e;
+    }
+
+    .stage-details .your-answer {
+      color: #ef4444;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--white);
+      border: 2px solid var(--white);
+      padding: 14px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .difficulty-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .options-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .results-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen active">
+      <div class="title-section">
+        <div class="title-decoration">
+          <div class="title-dot"></div>
+          <div class="title-dot"></div>
+          <div class="title-dot"></div>
+        </div>
+        <h1>Are You a Perfect Pitch?</h1>
+        <p class="subtitle"></p>
+      </div>
+      <div class="test-type-cards">
+        <div class="test-card" data-test="note">
+          <div class="card-number">1</div>
+          <div class="card-content">
+            <div class="card-title">Note Identification</div>
+            <div class="card-desc">Hear a single note, guess which one</div>
+          </div>
+          <svg class="card-icon" viewBox="0 0 24 24">
+            <circle cx="5.5" cy="17.5" r="2.5"/>
+            <circle cx="18.5" cy="15.5" r="2.5"/>
+            <path d="M8 17V5l12-2"/>
+          </svg>
+        </div>
+        <div class="test-card" data-test="sequence">
+          <div class="card-number">2</div>
+          <div class="card-content">
+            <div class="card-title">Note Sequence Memory</div>
+            <div class="card-desc">Remember and repeat a sequence</div>
+          </div>
+          <svg class="card-icon" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="4" height="18" rx="1"/>
+            <rect x="10" y="8" width="4" height="13" rx="1"/>
+            <rect x="17" y="5" width="4" height="16" rx="1"/>
+          </svg>
+        </div>
+        <div class="test-card" data-test="chord">
+          <div class="card-number">3</div>
+          <div class="card-content">
+            <div class="card-title">Chord Type Detection</div>
+            <div class="card-desc">Identify major, minor, diminished, augmented</div>
+          </div>
+          <svg class="card-icon" viewBox="0 0 24 24">
+            <path d="M12 3v18M8 7v10M16 7v10M4 12h16"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Name Entry Screen -->
+    <div id="name-screen" class="screen">
+      <button class="back-btn" onclick="goToScreen('start-screen')">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <div class="selected-test-badge">
+        <div id="selected-test-name">Note Identification</div>
+      </div>
+      <div class="title-section">
+        <h2>What's your name?</h2>
+      </div>
+      <div class="input-group">
+        <label for="player-name">Your Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="30">
+      </div>
+      <button class="btn-primary" onclick="submitName()">Continue</button>
+    </div>
+
+    <!-- Difficulty Screen -->
+    <div id="difficulty-screen" class="screen">
+      <button class="back-btn" onclick="goToScreen('name-screen')">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <div class="title-section">
+        <h2>Choose Difficulty</h2>
+      </div>
+      <div class="difficulty-cards">
+        <div class="difficulty-card" data-difficulty="easy">
+          <div class="difficulty-label">Easy</div>
+        </div>
+        <div class="difficulty-card" data-difficulty="medium">
+          <div class="difficulty-label">Medium</div>
+        </div>
+        <div class="difficulty-card" data-difficulty="hard">
+          <div class="difficulty-label">Hard</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+      <div class="game-header">
+        <button class="game-back-btn" onclick="exitToMenu()">
+          <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Exit
+        </button>
+        <div class="game-header-center">
+          <div class="question-counter">Question <span id="current-question">1</span>/5</div>
+          <div class="game-score">Score: <span id="current-score">0</span></div>
+        </div>
+      </div>
+      <div class="game-content" id="game-content">
+        <!-- Dynamic content inserted here -->
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen">
+      <div class="results-header">
+        <h2 id="results-title">Game Over!</h2>
+        <div class="score-display">
+          <span id="final-score">0</span><span> / <span id="max-score">250</span></span>
+        </div>
+        <div class="rating-badge" id="rating-badge">Good Job!</div>
+      </div>
+      <div class="breakdown-section">
+        <div class="breakdown-title">Breakdown</div>
+        <div class="questions-grid" id="stages-breakdown">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+      <div class="results-actions">
+        <button class="btn-secondary" onclick="playAgain()">Play Again</button>
+        <button class="btn-secondary" onclick="chooseDifficulty()">Choose Difficulty</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // AUDIO LAYER (Extensible for future integration)
+    // ============================================
+    const AudioEngine = {
+      // Notes: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+      notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+      //Base path for my audio files 
+      basePath: 'Note Sound/',
+
+      // Chord types
+      chordTypes: ['major', 'minor', 'diminished', 'augmented'],
+      //audio object cache for preloaded audio files
+      audioCache: {},
+
+      // Sequence length for sequence mode
+      sequenceLength: 3,
+
+      //Get or create an Audio object for a note
+      getAudio(note) {
+    // Check cache first
+    if (this.audioCache[note]) {
+      return this.audioCache[note];
+    }
+
+    // Create new audio object
+    const audio = new Audio();
+    audio.src = this.basePath + note + ' note.mp3';
+    audio.preload = 'auto';
+    
+    // Cache it
+    this.audioCache[note] = audio;
+    
+    return audio;
+  },
+
+      /**
+       * Play a single note
+       * @param {string} note - Note name (e.g., 'C', 'D#', 'A')
+       * @param {number} repetitions - How many times to play
+       */
+      playNote(note, repetitions = 1) {
+    console.log(`[AudioEngine] Playing note: ${note} (${repetitions}x)`);
+    
+    for (let i = 0; i < repetitions; i++) {
+      const audio = this.getAudio(note);
+      audio.currentTime = 0; // Reset to start
+      audio.play().catch(err => {
+        console.warn(`[AudioEngine] Could not play ${note}:`, err.message);
+      });
+      
+      // Wait for audio to finish before playing again (if repetitions > 1)
+      if (repetitions > 1 && i < repetitions - 1) {
+        audio.onended = () => {};
+      }
+    }
+  },
+  
+      /**
+       * Play a chord
+       * @param {string} root - Root note
+       * @param {string} chordType - Type of chord (major, minor, diminished, augmented)
+       * @param {number} repetitions - How many times to play
+       */
+      playChord(root, chordType, repetitions = 1) {
+        console.log(`[AudioEngine] Playing chord: ${root} ${chordType} (${repetitions}x)`);
+        // TODO: Integrate actual audio playback here
+      },
+
+      /**
+       * Play a sequence of notes
+       * @param {string[]} sequence - Array of note names
+       * @param {number} repetitions - How many times to play the full sequence
+       */
+      playSequence(sequence, repetitions = 1) {
+        console.log(`[AudioEngine] Playing sequence: ${sequence.join(' -> ')} (${repetitions}x)`);
+        // TODO: Integrate actual audio playback here
+      },
+
+      /**
+       * Stop all audio
+       */
+      stop() {
+        console.log('[AudioEngine] Stopping audio');
+        // TODO: Stop any playing audio
+      }
+    };
+
+    // ============================================
+    // GAME STATE
+    // ============================================
+    const GameState = {
+      currentScreen: 'start-screen',
+      testType: null,
+      playerName: '',
+      difficulty: null,
+      currentQuestion: 1,
+      totalScore: 0,
+      questionResults: [],
+
+      reset() {
+        this.currentQuestion = 1;
+        this.totalScore = 0;
+        this.questionResults = [];
+      }
+    };
+
+    // ============================================
+    // JOKE SYSTEM
+    // ============================================
+    const Jokes = {
+      noteIdentification: [
+        "Close... but the piano has one more key to teach you!",
+        "Not quite! Did you perhaps hear a ghost?",
+        "That note was playing hide and seek!",
+        "Hmm, the note says 'wrong answer, try again!'",
+        "Your ear is still warming up!",
+        "Even Beethoven had to start somewhere!",
+        "That note was feeling shy today!",
+        "The musical gods say 'try again!'"
+      ],
+      sequence: [
+        "Memory like a goldfish? No worries, goldfish are cute!",
+        "The notes escaped before you could catch them!",
+        "Almost! Your brain just needs more practice reps!",
+        "Sequence failed! But your effort was note-worthy!",
+        "Those notes were fast like a musical sprint!",
+        "Your memory is at boot camp, not battle ready!"
+      ],
+      chord: [
+        "Wrong chord! The piano's feeling blue... wait, no, that's a minor thing!",
+        "Did someone swap the major/minor signs? Classic mix-up!",
+        "That chord was full of suspense! But not the right one!",
+        "Major or minor? The plot thickens!",
+        "Your ears went on an adventure, but ended up lost!",
+        "Diminished? Augmented? Too many directions!"
+      ]
+    };
+
+    function getRandomJoke(category) {
+      const jokes = Jokes[category] || Jokes.noteIdentification;
+      return jokes[Math.floor(Math.random() * jokes.length)];
+    }
+
+    // ============================================
+    // RATINGS
+    // ============================================
+    const Ratings = {
+      note: [
+        { min: 250, text: "Perfect pitch! You're a musical genius!" },
+        { min: 220, text: "Excellent ear! Almost perfect!" },
+        { min: 180, text: "Great job! Your ears are well-trained!" },
+        { min: 140, text: "Good attempt! Keep practicing!" },
+        { min: 100, text: "Not bad! Room for improvement!" },
+        { min: 50, text: "Keep trying! Every musician starts here!" },
+        { min: 0, text: "Don't give up! Practice makes perfect!" }
+      ],
+      sequence: [
+        { min: 250, text: "Memory master! Incredible!" },
+        { min: 220, text: "Excellent recall! Very impressive!" },
+        { min: 180, text: "Great memory skills!" },
+        { min: 140, text: "Good effort! Your memory is growing!" },
+        { min: 100, text: "Decent attempt! Keep training!" },
+        { min: 50, text: "Practice makes perfect!" },
+        { min: 0, text: "Don't give up! Memory builds over time!" }
+      ],
+      chord: [
+        { min: 250, text: "Chord virtuoso! Perfect identification!" },
+        { min: 220, text: "Amazing! You really know your chords!" },
+        { min: 180, text: "Great job! Your ear for harmony is strong!" },
+        { min: 140, text: "Good effort! Keep listening!" },
+        { min: 100, text: "Decent! Keep practicing those chords!" },
+        { min: 50, text: "Keep trying! Chord recognition takes time!" },
+        { min: 0, text: "Don't give up! Every maestro started here!" }
+      ]
+    };
+
+    function getRating(score, maxScore, testType) {
+      const ratings = Ratings[testType] || Ratings.note;
+      const percentage = (score / maxScore) * 100;
+
+      for (const rating of ratings) {
+        if (percentage >= (rating.min / maxScore) * 100) {
+          return rating.text;
+        }
+      }
+      return ratings[ratings.length - 1].text;
+    }
+
+    // ============================================
+    // SCREEN MANAGEMENT
+    // ============================================
+    function goToScreen(screenId) {
+      const currentScreen = document.getElementById(GameState.currentScreen);
+      const nextScreen = document.getElementById(screenId);
+
+      currentScreen.classList.remove('active');
+      currentScreen.classList.add('exit');
+
+      setTimeout(() => {
+        currentScreen.classList.remove('exit');
+      }, 400);
+
+      nextScreen.classList.add('active');
+      GameState.currentScreen = screenId;
+    }
+
+    // ============================================
+    // GAME LOGIC
+    // ============================================
+    function selectTestType(testType) {
+      GameState.testType = testType;
+      const testNames = {
+        note: 'Note Identification',
+        sequence: 'Note Sequence Memory',
+        chord: 'Chord Type Detection'
+      };
+      document.getElementById('selected-test-name').textContent = testNames[testType];
+      goToScreen('name-screen');
+    }
+
+    function submitName() {
+      const nameInput = document.getElementById('player-name');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        nameInput.focus();
+        nameInput.style.boxShadow = '4px 4px 0 #ef4444';
+        setTimeout(() => {
+          nameInput.style.boxShadow = '';
+        }, 1500);
+        return;
+      }
+
+      GameState.playerName = name;
+      goToScreen('difficulty-screen');
+    }
+
+    function selectDifficulty(difficulty) {
+      GameState.difficulty = difficulty;
+      GameState.currentQuestion = 1;
+      GameState.totalScore = 0;
+      GameState.questionResults = [];
+      startGame();
+    }
+
+    function getNoteDistance(note1, note2) {
+      const notes = AudioEngine.notes;
+      const idx1 = notes.indexOf(note1);
+      const idx2 = notes.indexOf(note2);
+
+      if (idx1 === -1 || idx2 === -1) return 12;
+
+      let distance = Math.abs(idx1 - idx2);
+      return Math.min(distance, 12 - distance);
+    }
+
+    function calculateScore(correctAnswer, userAnswer, isChordMode = false) {
+      if (isChordMode) {
+        return correctAnswer === userAnswer ? 10 : 0;
+      }
+
+      // For note and sequence modes
+      if (Array.isArray(correctAnswer) && Array.isArray(userAnswer)) {
+        let totalScore = 0;
+        for (let i = 0; i < correctAnswer.length; i++) {
+          const distance = getNoteDistance(correctAnswer[i], userAnswer[i]);
+          const questionScore = Math.max(0, 10 - distance);
+          totalScore += questionScore;
+        }
+        return totalScore;
+      } else {
+        const distance = getNoteDistance(correctAnswer, userAnswer);
+        return Math.max(0, 10 - distance);
+      }
+    }
+
+    function generateQuestion() {
+      const testType = GameState.testType;
+      const difficulty = GameState.difficulty;
+      const repetitions = difficulty === 'easy' ? 5 : (difficulty === 'medium' ? 3 : 1);
+
+      if (testType === 'note') {
+        const note = AudioEngine.notes[Math.floor(Math.random() * AudioEngine.notes.length)];
+        return {
+          type: 'note',
+          correctAnswer: note,
+          audioAction: () => AudioEngine.playNote(note, repetitions)
+        };
+      } else if (testType === 'sequence') {
+        const length = GameState.sequenceLength;
+        const sequence = [];
+        for (let i = 0; i < length; i++) {
+          sequence.push(AudioEngine.notes[Math.floor(Math.random() * AudioEngine.notes.length)]);
+        }
+        return {
+          type: 'sequence',
+          correctAnswer: sequence,
+          audioAction: () => AudioEngine.playSequence(sequence, repetitions)
+        };
+      } else if (testType === 'chord') {
+        const root = AudioEngine.notes[Math.floor(Math.random() * AudioEngine.notes.length)];
+        const chordType = AudioEngine.chordTypes[Math.floor(Math.random() * AudioEngine.chordTypes.length)];
+        return {
+          type: 'chord',
+          correctAnswer: chordType,
+          audioAction: () => AudioEngine.playChord(root, chordType, repetitions)
+        };
+      }
+    }
+
+    let currentQuestion = null;
+    let userAnswers = [];
+    let noteEntryCount = 0; // Track how many notes have been entered
+
+    function renderGameScreen() {
+      const question = GameState.currentQuestion;
+      const score = GameState.totalScore;
+
+      document.getElementById('current-question').textContent = question;
+      document.getElementById('current-score').textContent = score;
+
+      currentQuestion = generateQuestion();
+      userAnswers = [];
+      noteEntryCount = 0;
+
+      const gameContent = document.getElementById('game-content');
+
+      if (GameState.testType === 'note') {
+        gameContent.innerHTML = `
+          <div class="audio-section">
+            <div class="audio-label">Tap to play the note</div>
+            <button class="audio-btn" onclick="playCurrentAudio()">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+              Play Note
+            </button>
+          </div>
+          <div class="question-section">
+            <h3>Which note did you hear?</h3>
+            <div class="options-grid" id="options-grid">
+              ${AudioEngine.notes.map(note => `
+                <button class="option-btn" data-value="${note}" onclick="selectOption(this, '${note}')">${note}</button>
+              `).join('')}
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>Submit Answer</button>
+          <div class="result-message" id="result-message"></div>
+        `;
+      } else if (GameState.testType === 'sequence') {
+        gameContent.innerHTML = `
+          <div class="audio-section">
+            <div class="audio-label">Tap to play the sequence</div>
+            <button class="audio-btn" onclick="playCurrentAudio()">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+              Play Sequence
+            </button>
+          </div>
+          <div class="question-section">
+            <h3>Enter the sequence (click notes in order)</h3>
+            <div class="sequence-display" id="sequence-display">
+              ${Array(currentQuestion.correctAnswer.length).fill().map(() => '<div class="sequence-note">?</div>').join('')}
+            </div>
+            <div class="options-grid" id="options-grid">
+              ${AudioEngine.notes.map(note => `
+                <button class="option-btn" data-value="${note}" onclick="selectSequenceNote(this, '${note}')">${note}</button>
+              `).join('')}
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitSequenceAnswer()" disabled>Submit Sequence</button>
+          <div class="result-message" id="result-message"></div>
+        `;
+      } else if (GameState.testType === 'chord') {
+        gameContent.innerHTML = `
+          <div class="audio-section">
+            <div class="audio-label">Tap to play the chord</div>
+            <button class="audio-btn" onclick="playCurrentAudio()">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+              Play Chord
+            </button>
+          </div>
+          <div class="question-section">
+            <h3>What type of chord did you hear?</h3>
+            <div class="options-grid" id="options-grid">
+              ${AudioEngine.chordTypes.map(type => `
+                <button class="option-btn" data-value="${type}" onclick="selectOption(this, '${type}')">${type.charAt(0).toUpperCase() + type.slice(1)}</button>
+              `).join('')}
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>Submit Answer</button>
+          <div class="result-message" id="result-message"></div>
+        `;
+      }
+    }
+
+    function playCurrentAudio() {
+      if (currentQuestion && currentQuestion.audioAction) {
+        currentQuestion.audioAction();
+      }
+    }
+
+    function selectOption(element, value) {
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => btn.classList.remove('selected'));
+      element.classList.add('selected');
+
+      userAnswers = [value];
+      document.getElementById('submit-btn').disabled = false;
+    }
+
+    function selectSequenceNote(element, value) {
+      if (noteEntryCount >= currentQuestion.correctAnswer.length) return;
+
+      userAnswers.push(value);
+      noteEntryCount++;
+
+      // Update sequence display
+      const sequenceDisplay = document.getElementById('sequence-display');
+      const notes = sequenceDisplay.querySelectorAll('.sequence-note');
+      notes[noteEntryCount - 1].textContent = value;
+      notes[noteEntryCount - 1].classList.add('inputted');
+
+      // Disable the button to prevent re-use
+      element.disabled = true;
+
+      // Enable submit if all notes entered
+      if (userAnswers.length === currentQuestion.correctAnswer.length) {
+        document.getElementById('submit-btn').disabled = false;
+      }
+    }
+
+    function submitAnswer() {
+      const submitBtn = document.getElementById('submit-btn');
+      const resultMessage = document.getElementById('result-message');
+      const buttons = document.querySelectorAll('.option-btn');
+
+      // Disable all buttons
+      buttons.forEach(btn => btn.disabled = true);
+      submitBtn.disabled = true;
+
+      // Calculate score
+      const isChordMode = GameState.testType === 'chord';
+      const score = calculateScore(currentQuestion.correctAnswer, userAnswers[0], isChordMode);
+
+      // Show correct/incorrect styling
+      buttons.forEach(btn => {
+        if (btn.dataset.value === currentQuestion.correctAnswer) {
+          btn.classList.add('correct');
+        } else if (btn.classList.contains('selected') && btn.dataset.value !== currentQuestion.correctAnswer) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      // Show result message
+      resultMessage.classList.add('show');
+
+      if (score === 10 || (isChordMode && score > 0)) {
+        resultMessage.classList.add('correct');
+        resultMessage.classList.remove('incorrect');
+        resultMessage.innerHTML = `<strong>Correct!</strong>`;
+      } else {
+        resultMessage.classList.add('incorrect');
+        resultMessage.classList.remove('correct');
+        const joke = getRandomJoke(GameState.testType === 'chord' ? 'chord' : (GameState.testType === 'sequence' ? 'sequence' : 'note'));
+        resultMessage.innerHTML = `<strong>Not quite!</strong><div class="joke-text">${joke}</div>`;
+      }
+
+      GameState.totalScore += score;
+
+      // Record stage result
+      recordQuestionResult(score);
+
+      // Update score display
+      document.getElementById('current-score').textContent = GameState.totalScore;
+
+      // Add next button
+      const gameContent = document.getElementById('game-content');
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'next-btn';
+      nextBtn.textContent = 'Next Question';
+      nextBtn.onclick = nextQuestion;
+      gameContent.appendChild(nextBtn);
+    }
+
+    function submitSequenceAnswer() {
+      const submitBtn = document.getElementById('submit-btn');
+      const resultMessage = document.getElementById('result-message');
+      const buttons = document.querySelectorAll('.option-btn');
+      const sequenceDisplay = document.getElementById('sequence-display');
+      const notes = sequenceDisplay.querySelectorAll('.sequence-note');
+
+      // Disable all buttons
+      buttons.forEach(btn => btn.disabled = true);
+      submitBtn.disabled = true;
+
+      // Calculate score
+      const score = calculateScore(currentQuestion.correctAnswer, userAnswers, false);
+
+      // Show correct/incorrect styling
+      const correctAnswers = currentQuestion.correctAnswer;
+
+      for (let i = 0; i < notes.length; i++) {
+        if (userAnswers[i] === correctAnswers[i]) {
+          notes[i].classList.add('answer');
+        } else {
+          notes[i].classList.add('wrong');
+        }
+      }
+
+      // Show result message
+      resultMessage.classList.add('show');
+
+      if (score === currentQuestion.correctAnswer.length * 10) {
+        resultMessage.classList.add('correct');
+        resultMessage.classList.remove('incorrect');
+        resultMessage.innerHTML = `<strong>Perfect sequence!</strong>`;
+      } else {
+        resultMessage.classList.add('incorrect');
+        resultMessage.classList.remove('correct');
+        const joke = getRandomJoke('sequence');
+        resultMessage.innerHTML = `<strong>Not quite!</strong><div class="joke-text">${joke}</div>`;
+      }
+
+      GameState.totalScore += score;
+
+      // Record stage result
+      recordQuestionResult(score);
+
+      // Update score display
+      document.getElementById('current-score').textContent = GameState.totalScore;
+
+      // Add next button
+      const gameContent = document.getElementById('game-content');
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'next-btn';
+      nextBtn.textContent = 'Next Question';
+      nextBtn.onclick = nextQuestion;
+      gameContent.appendChild(nextBtn);
+    }
+
+    function recordQuestionResult(score) {
+      const question = GameState.currentQuestion;
+      const isChordMode = GameState.testType === 'chord';
+      const isSequenceMode = GameState.testType === 'sequence';
+
+      GameState.questionResults.push({
+        question: question,
+        score: score,
+        maxScore: isChordMode ? 10 : (isSequenceMode ? currentQuestion.correctAnswer.length * 10 : 10),
+        correctAnswer: currentQuestion.correctAnswer,
+        userAnswer: isSequenceMode ? [...userAnswers] : userAnswers[0]
+      });
+    }
+
+    function nextQuestion() {
+      GameState.currentQuestion++;
+
+      if (GameState.currentQuestion > 5) {
+        showResults();
+        return;
+      }
+
+      renderGameScreen();
+    }
+
+    function showResults() {
+      const maxScore = GameState.testType === 'sequence' ? 150 : 250;
+      const score = GameState.totalScore;
+      const rating = getRating(score, maxScore, GameState.testType);
+
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('max-score').textContent = maxScore;
+      document.getElementById('rating-badge').textContent = rating;
+
+      // Generate breakdown
+      const breakdownContainer = document.getElementById('stages-breakdown');
+      breakdownContainer.innerHTML = '';
+
+      // Single question bar for all 5 questions
+      const totalScore = GameState.questionResults.reduce((sum, q) => sum + q.score, 0);
+      const maxTotalScore = GameState.questionResults.reduce((sum, q) => sum + q.maxScore, 0);
+      const percentage = (totalScore / maxTotalScore) * 100;
+
+      const questionRow = document.createElement('div');
+      questionRow.className = 'stage-row';
+
+      const wrongQuestions = GameState.questionResults.filter(q => q.score < q.maxScore);
+
+      let detailsHTML = '';
+      if (wrongQuestions.length > 0) {
+        detailsHTML = '<div class="stage-details">';
+        wrongQuestions.forEach(wq => {
+          const correctStr = Array.isArray(wq.correctAnswer) ? wq.correctAnswer.join(', ') : wq.correctAnswer;
+          const userStr = Array.isArray(wq.userAnswer) ? wq.userAnswer.join(', ') : wq.userAnswer;
+          detailsHTML += `<span class="correct-answer">Q${wq.question}: ${correctStr}</span> &rarr; <span class="your-answer">${userStr}</span><br>`;
+        });
+        detailsHTML += '</div>';
+      }
+
+      questionRow.innerHTML = `
+        <div class="stage-bar-container">
+          <div class="stage-bar">
+            <div class="stage-bar-fill ${percentage < 100 ? 'partial' : ''}" style="width: ${percentage}%"></div>
+          </div>
+        </div>
+      `;
+
+      breakdownContainer.appendChild(questionRow);
+
+      if (detailsHTML) {
+        const detailsDiv = document.createElement('div');
+        detailsDiv.innerHTML = detailsHTML;
+        breakdownContainer.appendChild(detailsDiv);
+      }
+
+      goToScreen('results-screen');
+    }
+
+    function exitToMenu() {
+      if (confirm('Exit the game? Your progress will be lost.')) {
+        GameState.reset();
+        GameState.testType = null;
+        GameState.playerName = '';
+        GameState.difficulty = null;
+        goToScreen('start-screen');
+      }
+    }
+
+    function playAgain() {
+      GameState.currentQuestion = 1;
+      GameState.totalScore = 0;
+      GameState.questionResults = [];
+      startGame();
+    }
+
+    function chooseDifficulty() {
+      goToScreen('difficulty-screen');
+    }
+
+    function startGame() {
+      // Skip name screen if name already entered
+      if (GameState.playerName) {
+        renderGameScreen();
+        goToScreen('game-screen');
+      } else {
+        goToScreen('name-screen');
+      }
+    }
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    document.querySelectorAll('.test-card').forEach(card => {
+      card.addEventListener('click', () => {
+        selectTestType(card.dataset.test);
+      });
+    });
+
+    document.querySelectorAll('.difficulty-card').forEach(card => {
+      card.addEventListener('click', () => {
+        selectDifficulty(card.dataset.difficulty);
+      });
+    });
+
+    // Enter key for name input
+    document.getElementById('player-name').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitName();
+      }
+    });
+
+    // Mouse spotlight effect with smooth delay
+    let glowX = window.innerWidth / 2;
+    let glowY = window.innerHeight / 2;
+    let targetX = glowX;
+    let targetY = glowY;
+
+    document.addEventListener('mousemove', (e) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+    });
+
+    function animateGlow() {
+      // Slower interpolation for delayed movement
+      glowX += (targetX - glowX) * 0.04;
+      glowY += (targetY - glowY) * 0.04;
+
+      document.body.style.setProperty('--glow-x', glowX + 'px');
+      document.body.style.setProperty('--glow-y', glowY + 'px');
+
+      requestAnimationFrame(animateGlow);
+    }
+
+    animateGlow();
+  </script>
+</body>
+</html>
